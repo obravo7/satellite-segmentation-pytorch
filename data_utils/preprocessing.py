@@ -16,7 +16,7 @@ def meanstd_normalize(img, mean, std):
     return norm_img
 
 
-def _preprocess(img):
+def preprocess(img):
 
     image_array = np.array(img)
     if len(image_array.shape) == 2:
