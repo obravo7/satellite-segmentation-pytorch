@@ -5,6 +5,8 @@ from glob import glob
 from PIL import Image
 import torch
 
+from data_utils.preprocessing import preprocess
+
 
 class InferenceDataset(Dataset):
     """Basic Pytorch datatset"""
@@ -12,7 +14,7 @@ class InferenceDataset(Dataset):
         self.image_dir = image_dir
         self.masks_dir = masks_dir
         self.n_classes = n_classes
-        self.augmentation = augmentation
+        self.augmentations = augmentation
 
         self.ids = [os.path.splitext(file)[0] for file in os.listdir(self.image_dir)
                     if not file.startswith('.')]
@@ -32,35 +34,27 @@ class InferenceDataset(Dataset):
 
         assert image.size == mask.size, f"Image and mask should be the same size, but are {image.size}, and {mask.size}"
 
-        image = self._preprocess(image)
-        # mask = self._preprocess(mask)
+        image = preprocess(image)
+
         mask = np.array(mask)[..., np.newaxis].transpose((2, 0, 1))
-        # mask = pre_process_mask(mask, classes=self.n_classes)
 
-        if self.augmentation:
-            # todo
-            sample = self.augmentation(image=image, mask=mask)
+        n_labels = np.unique(mask)
+        assert len(n_labels) == self.n_classes, f"image has too many labels: {image_path[0]}"
 
-        response = {
-            "image": torch.from_numpy(image).type(torch.FloatTensor),
-            "mask": torch.from_numpy(mask).type(torch.FloatTensor)
-        }
+        mask = mask.transpose((2, 0, 1))
+
+        if self.augmentations:
+            augment = self.augmentations(image=image, mask=mask)
+            image = augment['image']
+            mask = augment['mask']
+            response = {
+                "image": image,
+                "mask": mask
+            }
+        else:
+            response = {
+                "image": torch.from_numpy(image).type(torch.FloatTensor),
+                "mask": torch.from_numpy(mask).type(torch.FloatTensor)
+            }
+
         return response
-
-    @classmethod
-    def _preprocess(cls, image):
-        # width, height = image.size
-
-        image_array = np.array(image)
-
-        if len(image_array.shape) == 2:
-            image_array = image_array[..., np.newaxis]  # (height, width) -> (height, width, 1)
-
-        # HWC -> CHW
-        image_trans = image_array.transpose((2, 0, 1))
-
-        # todo normalize
-        if image_trans.max() > 1:
-            image_trans = image_trans / 255
-
-        return image_trans
