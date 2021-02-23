@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from PIL import Image
 import json
+from typing import Any
 
 
 def create_mask(mask: np.ndarray, label_data: dict, pixel_labels: dict) -> np.ndarray:
@@ -79,3 +80,19 @@ def load_json(json_path: str):
     with open(json_path, 'rb') as f:
         data = json.load(f)
     return data
+
+
+class EasyDict(dict):
+    # adopted from https://github.com/NVlabs/stylegan2-ada/blob/main/dnnlib/util.py
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        self[name] = value
+
+    def __delattr__(self, name: str) -> None:
+        del self[name]
