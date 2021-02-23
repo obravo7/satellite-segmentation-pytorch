@@ -5,10 +5,9 @@ import glob
 import numpy as np
 from PIL import Image
 
-from data_utils.common import load_json, create_mask, tile_image
-from data_utils import colors
+from data_utils import common, colors, augment
 
-# set base dirs
+# data paths
 data_path = 'data/colors'
 mask_path = 'data/masks'
 raw_path = 'data/raw'
@@ -36,10 +35,10 @@ def create_base_dataset():
 
     os.makedirs(data_path, exist_ok=True)
     os.makedirs(mask_path, exist_ok=True)
-    json_paths = glob.glob('annotations/*.json')
+    json_paths = glob.glob('data/annotations/*.json')
     for json_path in json_paths:
 
-        annotation_data = load_json(json_path)
+        annotation_data = common.load_json(json_path)
         label_data = annotation_data['labels']
 
         # create mask data
@@ -47,8 +46,8 @@ def create_base_dataset():
         mask = np.ones((height, width, 3), dtype=np.uint8) * 255
         train_mask = np.zeros((height, width), dtype=np.uint8)  # background is a class, category 0
 
-        mask = create_mask(mask, label_data=label_data, pixel_labels=colors_from_hex)
-        train_mask = create_mask(train_mask, label_data=label_data, pixel_labels=train_labels)
+        mask = common.create_mask(mask, label_data=label_data, pixel_labels=colors_from_hex)
+        train_mask = common.create_mask(train_mask, label_data=label_data, pixel_labels=train_labels)
 
         file_name = os.path.basename(json_path).split('.')[0]
         Image.fromarray(mask, mode="RGB").save(os.path.join(data_path, f"{file_name}.png"))
@@ -63,6 +62,9 @@ def create_train_dataset():
 
     # There are 9 tiles that are left out as evaluation (testing)
     # diff = list(set(raw_base_names) - set(mask_base_names))
+    os.makedirs(image_save_path, exist_ok=True)
+    os.makedirs(mask_save_path, exist_ok=True)
+    os.makedirs(color_save_path, exist_ok=True)
 
     i = 1
     for mask_file_path in mask_image_list:
@@ -74,14 +76,117 @@ def create_train_dataset():
         mask = np.array(Image.open(mask_file_path))
         color = np.array(Image.open(color_msk_file_path))
 
-        tile_image(image=img,
-                   save_path=os.path.join(image_save_path, file_name.split('.')[0])
-                   )
-        tile_image(image=mask,
-                   save_path=os.path.join(mask_save_path, file_name.split('.')[0])
-                   )
-        tile_image(image=color,
-                   save_path=os.path.join(color_save_path, file_name.split('.')[0])
-                   )
+        common.tile_image(image=img,
+                          save_path=os.path.join(image_save_path, file_name.split('.')[0])
+                          )
+        common.tile_image(image=mask,
+                          save_path=os.path.join(mask_save_path, file_name.split('.')[0])
+                          )
+        common.tile_image(image=color,
+                          save_path=os.path.join(color_save_path, file_name.split('.')[0])
+                          )
         print(f'files completed: \t{i}/{len(mask_image_list)}...', end='\r')
         i += 1
+
+
+def augment_train_data():
+    i = 1
+    base_names = [os.path.basename(fn) for fn in glob.glob(os.path.join(mask_save_path, "*.png"))]
+    for fn in base_names:
+        msk_fp = os.path.join(mask_save_path, fn)
+        img_fp = os.path.join(image_save_path, fn)
+        color_fp = os.path.join(color_save_path, fn)
+
+        msk = np.array(Image.open(msk_fp))
+        img = np.array(Image.open(img_fp))
+        color = np.array(Image.open(color_fp))
+
+        # total blur
+        Image.fromarray(augment.totalBlur(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-blur.png'))
+        Image.fromarray(msk, mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-blur.png'))
+        Image.fromarray(color, mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-blur.png'))
+
+        # distort elastic
+        Image.fromarray(augment.distort_elastic_cv2(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-distort.png'))
+        Image.fromarray(msk, mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-distort.png'))
+        Image.fromarray(color, mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-distort.png'))
+
+        # mirror
+        Image.fromarray(augment.mirror(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-mirror.png'))
+        Image.fromarray(augment.mirror(msk), mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-mirror.png'))
+        Image.fromarray(augment.mirror(color), mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-mirror.png'))
+
+        # rotation invariance
+        Image.fromarray(augment.rotation_invariance(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-rt-inv.png'))
+        Image.fromarray(augment.rotation_invariance(msk), mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-rt-inv.png'))
+        Image.fromarray(augment.rotation_invariance(color), mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-rt-inv.png'))
+
+        # gaussian blur
+        Image.fromarray(augment.gaussBlur(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-gauss.png'))
+        Image.fromarray(msk, mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-gauss.png'))
+        Image.fromarray(color, mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-gauss.png'))
+
+        # distort elastic + rotation
+        rot = 90
+        Image.fromarray(augment.distort_elastic_cv2(augment.rotate(img, rot)), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-distort-rt.png'))
+        Image.fromarray(augment.rotate(msk, rot), mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-distort-rt.png'))
+        Image.fromarray(augment.rotate(color, rot), mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-distort-rt.png'))
+
+        # gaussian blur + rot
+        rot = 270
+        Image.fromarray(augment.gaussBlur(augment.rotate(img, rot)), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-gauss-rot.png'))
+        Image.fromarray(augment.rotate(msk, rot), mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-gauss-rot.png'))
+        Image.fromarray(augment.rotate(color, rot), mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-gauss-rot.png'))
+
+        # HSV
+        Image.fromarray(augment.to_hsv(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-hsv.png'))
+        Image.fromarray(msk, mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-hsv.png'))
+        Image.fromarray(color, mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-hsv.png'))
+
+        # increase brightness
+        Image.fromarray(augment.increase_brightness(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-bright.png'))
+        Image.fromarray(msk, mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-bright.png'))
+        Image.fromarray(color, mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-bright.png'))
+
+        # median blur
+        Image.fromarray(augment.medBlur(img), mode='RGB').save(
+            os.path.join(image_save_path, f'{fn.split(".")[0]}-med-blur.png'))
+        Image.fromarray(msk, mode='L').save(
+            os.path.join(mask_save_path, f'{fn.split(".")[0]}-med-blur.png'))
+        Image.fromarray(color, mode='RGB').save(
+            os.path.join(color_save_path, f'{fn.split(".")[0]}-med-blur.png'))
+
+        # crop and resize
+        # img_cr, mask_cr = augment.random_crop_and_resize(img, msk)
+        # img_cr.save(os.path.join(image_save_path, f'{fn.split(".")[0]}-crop-resize.png'))
+        # mask_cr.save(os.path.join(mask_save_path, f'{fn.split(".")[0]}-crop-resize.png'))
+        # Image.fromarray(color, mode='RGB').save(
+        #     os.path.join(color_save_path, f'{fn.split(".")[0]}-crop-resize.png'))
+
