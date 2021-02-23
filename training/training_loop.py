@@ -10,7 +10,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 from training.loss import MultiClassCriterion, dice_coeff
 from training.dataset import InferenceDataset
-from models.unet import UNet
 
 
 def run(
