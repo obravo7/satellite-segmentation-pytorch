@@ -38,8 +38,7 @@ blur |  bright increase  | distort  |  gaussian blur |
 ## Network & Training ##
 
 [U-Net](https://arxiv.org/abs/1505.04597) is used as a base model for segmentation. The original intention was to use U-Net to show base results,
-and then train **PSPNet** ([Pyramid Scene Parsing Network](https://arxiv.org/abs/1612.01105)) using a pretrained satellite segmentation model and show comparisons, but time did not allow for this. The PSP implementation 
-is still added in this repo. 
+and then train **PSPNet** ([Pyramid Scene Parsing Network](https://arxiv.org/abs/1612.01105)) using a pretrained satellite segmentation model and show comparisons, but time did not allow for this. 
 
 ### training parameters ###
 
@@ -70,6 +69,23 @@ The trained model is provided in `checkpoints/unet-augment-final.pth`
 
 ## Generating json annotations from U-Net predictions ##
 
-The expected output is a json annoted file containing the vector points corresponding to the classes. 
+The expected output is a json annotated file containing the vector points corresponding to the classes. 
 A function for generating such file is found in `predict.prediction_to_json(...)`. A python notebook
 is provided showing how to generate the json file, as well as how to generate a color mask file for the json file. 
+
+The example: [example.ipynb](https://github.com/obravo7/satellite-segmentation-pytorch/blob/master/example.ipynb) shows how
+to load the trained model and use it to create the annotation file. It also shows how to create a colored image masks directly with the
+annotation. 
+
+
+# Discussion #
+
+There are several improvements that can be made. For starters, some augmentation methods used could be replaced 
+or left out entirely, such as HSV. Simple color shift could have been used instead. Another major issue that should 
+have been addressed at the beginning was class imbalance. It would have been better to apply augmentations with respect to
+the class frequency, trying to shift the infrequency balance. 
+
+Another obvious issue is that U-Net was a network catered to medical image segmentation, but it is often used as a baseline mode
+because it is small and easy to implement. A more suitable network would have been PSPNet, as mentioned above. Similarly, 
+there exists several pretrained model that could have been used with transfer learning. This, coupled with meaningful augmentations,
+would have yielded a better model. 
