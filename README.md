@@ -42,7 +42,7 @@ and then train **PSPNet** ([Pyramid Scene Parsing Network](https://arxiv.org/abs
 
 ### training parameters ###
 
-U-Net was trained for 50 epochs, with a batch size of 4.
+U-Net was trained for ~~50~~ 43 epochs, with a batch size of 4.
 
 The base parameters for training can be seen, and adjusted, in `run_training.py`:
 
