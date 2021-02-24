@@ -70,9 +70,9 @@ def decode_seg_map(image) -> np.ndarray:
     """decode generated segmentation map into 3 channel RGB image."""
 
     h, w, n_labels = image.shape
-    rgb_mask = np.zeros((h, w, 3), dtype=np.uint8)
+    rgb_mask = np.ones((h, w, 3), dtype=np.uint8) * 255
 
-    for label in range(0, n_labels):
+    for label in range(1, n_labels):
         idx = np.where(image[:, :, label].astype(int) == 1)
         rgb_mask[idx] = colors_from_hex[str(label)]
 
@@ -81,8 +81,10 @@ def decode_seg_map(image) -> np.ndarray:
 
 def prediction_to_json(image_path, chkp_path, net=None) -> dict:
     """
-    {'filename':file_name,
-    {'labels': [{'name': label_name, 'annotations': [{'id':some_unique_integer_id, 'segmentation':[x,y,x,y,x,y....]}
+    Convert mask prediction to json. The format matches the format in the training annotation data:
+
+    {'filename':file_name, 'labels':
+    [{'name': label_name, 'annotations': [{'id':some_unique_integer_id, 'segmentation':[x,y,x,y,x,y....]}
                                              ....] }
         ....]
         }
