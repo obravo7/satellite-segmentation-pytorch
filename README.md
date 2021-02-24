@@ -7,9 +7,9 @@ This repo contains a U-Net implementation for satellite segmentation
 
 Due to a severe lack of training data, several pre-processing steps are taken to try and 
 alleviate this. First, the annotations are converted from their json files to image masks. Then, the satellite images are further tiled
-down, to tiles of size `(512x412)`, so that the images can be fed into a fully convolutional network (**FCN**) for semantic segmentation.
+down, to tiles of size `(512x512)`, so that the images can be fed into a fully convolutional network (**FCN**) for semantic segmentation.
 The augmentations are: 
-  - `blur`: combination of medial and bilateral blur
+  - `blur`: combination of median and bilateral blur
   - `bright increase`: increase brightness artificially
   - `distort`: elastic deformation of image
   - `gaussian blur`: gaussian blurring
@@ -88,4 +88,4 @@ the class frequency, trying to shift the infrequency balance.
 Another obvious issue is that U-Net was a network catered to medical image segmentation, but it is often used as a baseline mode
 because it is small and easy to implement. A more suitable network would have been PSPNet, as mentioned above. Similarly, 
 there exists several pretrained model that could have been used with transfer learning. This, coupled with meaningful augmentations,
-would have yielded a better model. 
+would have yielded better model/results. 
