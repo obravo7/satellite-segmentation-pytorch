@@ -1,0 +1,7 @@
+numpy
+pillow
+opencv-python-headless
+torch==1.7.0
+torchvision==0.5.0
+tensorboard
+tqdm
