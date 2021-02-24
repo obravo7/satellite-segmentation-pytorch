@@ -35,3 +35,41 @@ blur |  bright increase  | distort  |  gaussian blur |
 ![](docs/images/0_0-0_0-distort-rt.png) |  ![](docs/images/0_0-0_0-rt-inv.png)  |  ![](docs/images/0_0-0_0-crop-resize.png) 
 
 
+## Network & Training ##
+
+[U-Net](https://arxiv.org/abs/1505.04597) is used as a base model for segmentation. The original intention was to use U-Net to show base results,
+and then train **PSPNet** ([Pyramid Scene Parsing Network](https://arxiv.org/abs/1612.01105)) using a pretrained satellite segmentation model and show comparisons, but time did not allow for this. The PSP implementation 
+is still added in this repo. 
+
+### training parameters ###
+
+U-Net was trained for 50 epochs, with a batch size of 4.
+
+The base parameters for training can be seen, and adjusted, in `run_training.py`:
+
+
+```python
+def setup_run_arguments():
+    args = EasyDict()
+    args.epochs = 50
+    args.batch = 4
+    args.val_percent = 0.2
+    args.n_classes = 4
+    args.n_channels = 3
+    args.num_workers = 8
+
+    args.learning_rate = 0.001
+    args.weight_decay = 1e-8
+    args.momentum = 0.9
+    args.save_cp = True
+    args.loss = "CrossEntropy"
+```
+
+The trained model is provided in `checkpoints/unet-augment-final.pth`
+
+
+## Generating json annotations from U-Net predictions ##
+
+The expected output is a json annoted file containing the vector points corresponding to the classes. 
+A function for generating such file is found in `predict.prediction_to_json(...)`. A python notebook
+is provided showing how to generate the json file, as well as how to generate a color mask file for the json file. 
