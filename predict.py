@@ -114,13 +114,13 @@ def prediction_to_json(image_path, chkp_path, net=None) -> dict:
         category = category_labels[str(label)]
         c_label = {'color': color, 'name': category, 'annotations': []}
 
-        label_mask = msk[:, :, label].astype(int)
+        label_mask = msk[:, :, label].astype(int).astype(np.uint8)
         contours, hierarchy = cv2.findContours(label_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         for contour in contours:
             vector_points = []
             for x, y in contour.reshape((len(contour), 2)):
-                vector_points += [x, y]
+                vector_points += [float(x), float(y)]
 
             c_label['annotations'].append({'segmentation': vector_points})
 
