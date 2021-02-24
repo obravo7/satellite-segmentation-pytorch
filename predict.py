@@ -35,7 +35,7 @@ category_labels = {
 }
 
 
-def predict_on_image(net, src_img, device, thresh=0.1):
+def predict_on_image(net, src_img, device, thresh=0.6):
     net.eval()
 
     img = torch.from_numpy(preprocess(src_img))  # hack
@@ -101,7 +101,7 @@ def prediction_to_json(image_path, chkp_path, net=None) -> dict:
             torch.load(chkp_path, map_location=device)
         )
 
-    img = Image.open(image_path, )
+    img = Image.open(image_path)
 
     msk = predict_on_image(net=net, device=device, src_img=img)
     msk = msk.transpose((1, 2, 0))
