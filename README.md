@@ -75,7 +75,7 @@ is provided showing how to generate the json file, as well as how to generate a 
 
 The example: [example.ipynb](https://github.com/obravo7/satellite-segmentation-pytorch/blob/master/example.ipynb) shows how
 to load the trained model and use it to create the annotation file. It also shows how to create a colored image masks directly with the
-annotation. 
+annotation. (The example notebook was created with u-net after 35 epochs)
 
 
 # Discussion #
